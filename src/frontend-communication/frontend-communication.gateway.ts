@@ -5,20 +5,24 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { FrontendCommunicationService } from './frontend-communication.service';
 import { ClientBet } from '../model/client-bet.model';
 import { GameState } from '../enum/game-state.enum';
+import { Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @WebSocketGateway()
 export class FrontendCommunicationGateway implements OnGatewayInit {
-  constructor(private service: FrontendCommunicationService) {}
+  constructor(
+    private service: FrontendCommunicationService,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {}
 
   @WebSocketServer() server: Server;
   clientBets: ClientBet[] = [];
-  currentMultiplier: number;
+  private currentMultiplier: number;
   private currentState: GameState;
 
   afterInit() {
@@ -42,14 +46,13 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
 
     let replyDelay = 100;
     for (
-      let currentMultiplier = 100;
-      currentMultiplier < multiplier * 100;
-      currentMultiplier++
+      this.currentMultiplier = 100;
+      this.currentMultiplier < multiplier * 100;
+      this.currentMultiplier++
     ) {
-      this.currentMultiplier = currentMultiplier / 100;
-      this.server.emit('getMultiplier', this.currentMultiplier);
+      this.server.emit('getMultiplier', this.currentMultiplier / 100);
 
-      if (replyDelay > 50 && currentMultiplier % 5 == 0) {
+      if (replyDelay > 50 && this.currentMultiplier % 5 == 0) {
         replyDelay -= 4;
       }
       await this.service.delay(replyDelay);
@@ -72,10 +75,12 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
   @SubscribeMessage('betManagment')
   betManagment(@ConnectedSocket() client: Socket, @MessageBody() data: any) {
     if (this.currentState !== GameState.AcceptingBets) {
-      throw new WsException('Time for placing bets is over');
+      client.emit('betManagment', 'Time for placing bets is over');
+      return;
     }
 
     data = JSON.parse(data);
+
     if (
       !this.clientBets.some((clientBet) => clientBet.clientId === client.id)
     ) {
@@ -86,17 +91,17 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
   @SubscribeMessage('playerWithdraw')
   playerWithdraw(@ConnectedSocket() client: Socket) {
     if (this.currentState !== GameState.SendingMultiplier) {
-      throw new WsException('Cannot withdraw');
+      client.emit('playerWithdraw', 'Cannot withdraw');
+      return;
     }
 
     const clientBet = this.clientBets.find(
       (clientBet) => clientBet.clientId === client.id,
     );
 
-    client.emit(
-      'playerWithdraw',
-      'You won: ' + clientBet.bet * this.currentMultiplier,
-    );
+    const reward = clientBet.bet * (this.currentMultiplier / 100);
+
+    client.emit('playerWithdraw', 'You won: ' + reward);
 
     //to do: integration
     //money from casino wallet -> user wallet

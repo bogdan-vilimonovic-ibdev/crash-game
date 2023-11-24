@@ -24,9 +24,10 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
   ) {}
 
   @WebSocketServer() server: Server;
+
   private currentMultiplier: number;
   private currentState: GameState;
-  gameId: string;
+  private currentGameId: string;
 
   afterInit() {
     this.gameLoop();
@@ -47,13 +48,13 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
 
     const multiplier = this.service.getCrashPoint();
 
-    this.gameId = uuidv4();
+    this.currentGameId = uuidv4();
     this.gameInfoRepository.create({
-      gameId: this.gameId,
+      gameId: this.currentGameId,
       multiplier: multiplier,
     });
 
-    let replyDelay = 100;
+    const replyDelay = { value: 100 };
     for (
       this.currentMultiplier = 100;
       this.currentMultiplier < multiplier * 100;
@@ -61,10 +62,9 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
     ) {
       this.server.emit('getMultiplier', this.currentMultiplier / 100);
 
-      if (replyDelay > 50 && this.currentMultiplier % 5 == 0) {
-        replyDelay -= 4;
-      }
-      await this.service.delay(replyDelay);
+      this.service.shortenDelayTime(replyDelay, this.currentMultiplier);
+
+      await this.service.delay(replyDelay.value);
     }
   }
 
@@ -78,7 +78,7 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
       clientSocket.emit('betManagment', 'you lost');
 
       this.betResultRepository.create({
-        gameId: this.gameId,
+        gameId: this.currentGameId,
         userId: clientBet.clientId,
         bet: clientBet.bet,
         won: false,
@@ -102,10 +102,12 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
       return;
     }
 
+    let parsedData;
     try {
-      data = JSON.parse(data);
+      parsedData = JSON.parse(data);
     } catch (error) {
       client.emit('betManagment', 'Send a valid json object with bet inside');
+      return;
     }
 
     const clientBet = await this.clientBetRepository.findOne({
@@ -117,7 +119,10 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
       return;
     }
 
-    this.clientBetRepository.create({ clientId: client.id, bet: data.bet });
+    this.clientBetRepository.create({
+      clientId: client.id,
+      bet: parsedData.bet,
+    });
   }
 
   @SubscribeMessage('playerWithdraw')
@@ -141,7 +146,7 @@ export class FrontendCommunicationGateway implements OnGatewayInit {
     client.emit('playerWithdraw', 'You won: ' + reward);
 
     this.betResultRepository.create({
-      gameId: this.gameId,
+      gameId: this.currentGameId,
       userId: clientBet.clientId,
       bet: clientBet.bet,
       won: true,

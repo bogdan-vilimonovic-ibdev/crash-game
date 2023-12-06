@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-export class FrontendCommunicationService {
+export class BetService {
   getCrashPoint() {
     const e = 2 ** 32;
     const h = crypto.getRandomValues(new Uint32Array(1))[0];

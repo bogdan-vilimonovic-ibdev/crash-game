@@ -9,7 +9,7 @@ export class BetResult {
   gameId: string;
 
   @Prop()
-  userId: string;
+  clientId: string;
 
   @Prop()
   bet: number;
@@ -19,6 +19,12 @@ export class BetResult {
 
   @Prop()
   selectedMultiplier: number;
+
+  @Prop()
+  createdAt: number;
+
+  @Prop()
+  updatedAt: number;
 }
 
 export const BetResultSchema = SchemaFactory.createForClass(BetResult);

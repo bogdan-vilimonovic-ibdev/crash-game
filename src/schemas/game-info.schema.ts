@@ -10,6 +10,12 @@ export class GameInfo {
 
   @Prop()
   multiplier: number;
+
+  @Prop()
+  startedAt: number;
+
+  @Prop()
+  endedAt: number;
 }
 
 export const GameInfoSchema = SchemaFactory.createForClass(GameInfo);

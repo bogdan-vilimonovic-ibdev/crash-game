@@ -5,10 +5,7 @@ import { BetModule } from './bet/bet.module';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [
-    MongooseModule.forRoot('mongodb://localhost/clientbetdb'),
-    BetModule,
-  ],
+  imports: [MongooseModule.forRoot('mongodb://localhost/crashDb'), BetModule],
   controllers: [AppController],
   providers: [AppService],
 })

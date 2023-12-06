@@ -16,7 +16,7 @@ export class BetService {
   }
 
   shortenDelayTime(replyDelay: { value: number }, currentMultiplier: number) {
-    if (replyDelay.value > 50 && currentMultiplier % 5 === 0) {
+    if (replyDelay.value > 25 && currentMultiplier % 5 === 0) {
       replyDelay.value -= 4;
     }
   }

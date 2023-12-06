@@ -7,7 +7,7 @@ import { BetResultRepository } from '../repositories/bet-result.repository';
 import { GameInfo, GameInfoSchema } from '../schemas/game-info.schema';
 import { BetResult, BetResultSchema } from '../schemas/bet-result.schema';
 import { BetController } from './bet.controller';
-import { CurrentStateModule } from './common/current-state.module';
+import { CurrentGameModule } from './common/current-game.module';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { CurrentStateModule } from './common/current-state.module';
       { name: GameInfo.name, schema: GameInfoSchema },
       { name: BetResult.name, schema: BetResultSchema },
     ]),
-    CurrentStateModule,
+    CurrentGameModule,
   ],
   providers: [BetGateway, BetService, GameInfoRepository, BetResultRepository],
   exports: [BetGateway],

@@ -8,16 +8,14 @@ import { BetService } from './bet.service';
 import { GameState } from '../enums/game-state.enum';
 import { v4 as uuidv4 } from 'uuid';
 import { GameInfoRepository } from '../repositories/game-info.repository';
-import { BetResultRepository } from '../repositories/bet-result.repository';
-import { CurrentState } from './common/current-state.service';
+import { CurrentGame } from './common/current-game.service';
 
 @WebSocketGateway()
 export class BetGateway implements OnGatewayInit {
   constructor(
     private service: BetService,
     private readonly gameInfoRepository: GameInfoRepository,
-    private readonly betResultRepository: BetResultRepository,
-    private currentState: CurrentState,
+    private currentGame: CurrentGame,
   ) {}
 
   @WebSocketServer() server: Server;
@@ -28,20 +26,23 @@ export class BetGateway implements OnGatewayInit {
 
   async gameLoop() {
     while (true) {
+      await this.gameInit();
       await this.getMultiplier();
     }
   }
 
-  async getMultiplier() {
-    this.currentState.gameId = uuidv4();
+  async gameInit() {
+    this.currentGame.state = GameState.AcceptingBets;
 
-    this.currentState.state = GameState.AcceptingBets;
+    this.currentGame.gameId = uuidv4();
 
     this.server.emit('getMultiplier', 'Place your bet');
 
     await this.service.delay(10000);
+  }
 
-    this.currentState.state = GameState.SendingMultiplier;
+  async getMultiplier() {
+    this.currentGame.state = GameState.SendingMultiplier;
 
     const multiplier = this.service.getCrashPoint();
 
@@ -49,21 +50,25 @@ export class BetGateway implements OnGatewayInit {
 
     const replyDelay = { value: 100 };
     for (
-      this.currentState.multiplier = 100;
-      this.currentState.multiplier < multiplier * 100;
-      this.currentState.multiplier++
+      this.currentGame.multiplier = 100;
+      this.currentGame.multiplier <= multiplier * 100;
+      this.currentGame.multiplier++
     ) {
-      this.server.emit('getMultiplier', this.currentState.multiplier / 100);
+      this.server.emit('getMultiplier', this.currentGame.multiplier / 100);
 
-      this.service.shortenDelayTime(replyDelay, this.currentState.multiplier);
+      this.service.shortenDelayTime(replyDelay, this.currentGame.multiplier);
 
       await this.service.delay(replyDelay.value);
+    }
+
+    if (multiplier === 1) {
+      this.server.emit('getMultiplier', multiplier);
     }
 
     const endedAt = Date.now();
 
     this.gameInfoRepository.create({
-      gameId: this.currentState.gameId,
+      gameId: this.currentGame.gameId,
       multiplier,
       startedAt,
       endedAt,

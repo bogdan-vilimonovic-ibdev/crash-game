@@ -1,10 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpException,
-  HttpStatus,
-  Post,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post } from '@nestjs/common';
 import { CurrentGame } from './common/current-game.service';
 import { GameState } from '../enums/game-state.enum';
 import { BetDto } from './dtos/bet.dto';
@@ -21,10 +15,7 @@ export class BetController {
   @Post('place-bet')
   async placeBet(@Body() data: BetDto) {
     if (this.currentGame.state !== GameState.AcceptingBets) {
-      throw new HttpException(
-        'Time for placing bets is over',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('Time for placing bets is over');
     }
 
     const clientBet = await this.betResultRepository.findOne({
@@ -33,10 +24,7 @@ export class BetController {
     });
 
     if (clientBet) {
-      throw new HttpException(
-        'Bet has already been placed',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('Bet has already been placed');
     }
 
     const createdAt = Date.now();
@@ -56,7 +44,7 @@ export class BetController {
   @Post('bet-withdrawal')
   async betWithdrawal(@Body() betWithdrawDto: BetWithdrawDto) {
     if (this.currentGame.state !== GameState.SendingMultiplier) {
-      throw new HttpException('Cannot withdraw', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Cannot withdraw');
     }
 
     const clientBet = await this.betResultRepository.findOne({
@@ -64,10 +52,7 @@ export class BetController {
       gameId: this.currentGame.gameId,
     });
     if (!clientBet) {
-      throw new HttpException(
-        'You did not place a bet',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException('You did not place a bet');
     }
 
     const reward = clientBet.bet * (this.currentGame.multiplier / 100);
@@ -85,6 +70,6 @@ export class BetController {
       },
     );
 
-    return { reward };
+    return 'Your reward is: ' + reward;
   }
 }

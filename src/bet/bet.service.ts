@@ -1,23 +1,71 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { CurrentGame } from './common/current-game.service';
+import { BetResultRepository } from '../repositories/bet-result.repository';
+import { GameState } from '../enums/game-state.enum';
 
 @Injectable()
 export class BetService {
-  getCrashPoint() {
-    const e = 2 ** 32;
-    const h = crypto.getRandomValues(new Uint32Array(1))[0];
-    // if h % (100 / desired_precentage) is 0 then the game will crash immediately
-    // 100 / 2 (2 % casino advantage)
-    if (h % 50 == 0) return 1;
-    return Math.floor((100 * e - h) / (e - h)) / 100;
-  }
+  constructor(
+    private currentGame: CurrentGame,
+    private betResultRepository: BetResultRepository,
+  ) {}
 
-  delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  shortenDelayTime(replyDelay: { value: number }, currentMultiplier: number) {
-    if (replyDelay.value > 25 && currentMultiplier % 5 === 0) {
-      replyDelay.value -= 4;
+  async placeBet(clientId: string, betAmount: number) {
+    if (this.currentGame.state !== GameState.AcceptingBets) {
+      throw new BadRequestException('Time for placing bets is over');
     }
+
+    const clientBet = await this.betResultRepository.findOne({
+      clientId: clientId,
+      gameId: this.currentGame.gameId,
+    });
+
+    if (clientBet) {
+      throw new BadRequestException('Bet has already been placed');
+    }
+
+    const createdAt = Date.now();
+    this.betResultRepository.create({
+      gameId: this.currentGame.gameId,
+      clientId: clientId,
+      amount: betAmount,
+      won: false,
+      selectedMultiplier: 0,
+      createdAt,
+      updatedAt: null,
+    });
+
+    return 'Bet Placed';
+  }
+
+  async betWithdrawal(clientId: string) {
+    if (this.currentGame.state !== GameState.SendingMultiplier) {
+      throw new BadRequestException('Cannot withdraw');
+    }
+
+    const clientBet = await this.betResultRepository.findOne({
+      clientId: clientId,
+      gameId: this.currentGame.gameId,
+    });
+    if (!clientBet) {
+      throw new BadRequestException('You did not place a bet');
+    }
+
+    const reward = clientBet.amount * (this.currentGame.multiplier / 100);
+
+    const updatedAt = Date.now();
+    this.betResultRepository.findOneAndUpdate(
+      {
+        clientId: clientId,
+        gameId: this.currentGame.gameId,
+      },
+      {
+        won: true,
+        selectedMultiplier: this.currentGame.multiplier / 100,
+        updatedAt,
+      },
+    );
+
+    return 'Your reward is: ' + reward;
   }
 }

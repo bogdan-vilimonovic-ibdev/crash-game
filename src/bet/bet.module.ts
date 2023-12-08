@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { BetGateway } from './bet.gateway';
+import { BetGateway } from './websocket/bet.gateway';
 import { BetService } from './bet.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { GameInfoRepository } from '../repositories/game-info.repository';
@@ -8,6 +8,7 @@ import { GameInfo, GameInfoSchema } from '../schemas/game-info.schema';
 import { BetResult, BetResultSchema } from '../schemas/bet-result.schema';
 import { BetController } from './bet.controller';
 import { CurrentGameModule } from './common/current-game.module';
+import { BetHelperService } from './websocket/bet-helper.service';
 
 @Module({
   imports: [
@@ -17,7 +18,13 @@ import { CurrentGameModule } from './common/current-game.module';
     ]),
     CurrentGameModule,
   ],
-  providers: [BetGateway, BetService, GameInfoRepository, BetResultRepository],
+  providers: [
+    BetGateway,
+    BetService,
+    GameInfoRepository,
+    BetResultRepository,
+    BetHelperService,
+  ],
   exports: [BetGateway],
   controllers: [BetController],
 })

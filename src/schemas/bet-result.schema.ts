@@ -12,7 +12,7 @@ export class BetResult {
   clientId: string;
 
   @Prop()
-  bet: number;
+  amount: number;
 
   @Prop()
   won: boolean;

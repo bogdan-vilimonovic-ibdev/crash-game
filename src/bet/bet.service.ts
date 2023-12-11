@@ -51,6 +51,10 @@ export class BetService {
       throw new BadRequestException('You did not place a bet');
     }
 
+    if (clientBet.won) {
+      throw new BadRequestException('Already pulled out of the game');
+    }
+
     const reward = clientBet.amount * (this.currentGame.multiplier / 100);
 
     const updatedAt = Date.now();

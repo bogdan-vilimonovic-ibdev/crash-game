@@ -3,7 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createHash, createHmac } from 'crypto';
-import { User } from '../schemas/user.schema';
+import { User } from './schemas/user.schema';
 import { HashTokenReturnData } from './auth.interfaces';
 import { Cache } from 'cache-manager';
 

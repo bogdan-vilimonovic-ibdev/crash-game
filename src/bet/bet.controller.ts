@@ -1,7 +1,7 @@
 import { Body, Controller, Post, Res } from '@nestjs/common';
 import { BetDto } from './dtos/bet.dto';
-import { AuthMiddlewareData } from '../middleware/middleware.interfaces';
 import { BetService } from './bet.service';
+import { AuthMiddlewareData } from '../auth/middleware/middleware.interfaces';
 
 @Controller('bet')
 export class BetController {

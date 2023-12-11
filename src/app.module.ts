@@ -8,10 +8,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthMiddleware } from './middleware/auth.middleware';
 import { BetController } from './bet/bet.controller';
-import { User, UserSchema } from './schemas/user.schema';
-import { UserRepository } from './repositories/user.repository';
+import { User, UserSchema } from './auth/schemas/user.schema';
+import { UserRepository } from './auth/repositories/user.repository';
+import { AuthMiddleware } from './auth/middleware/auth.middleware';
 
 @Module({
   imports: [

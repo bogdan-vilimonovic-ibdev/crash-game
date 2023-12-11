@@ -9,8 +9,8 @@ import { NextFunction, Request, Response } from 'express';
 import { Cache } from 'cache-manager';
 import { JwtService } from '@nestjs/jwt';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { TokenData } from '../auth/auth.interfaces';
 import { UserRepository } from '../repositories/user.repository';
+import { TokenData } from '../auth.interfaces';
 import { User } from '../schemas/user.schema';
 
 @Injectable()

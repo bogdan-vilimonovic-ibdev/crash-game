@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { LoginUserDto } from './dtos/login-user.dto';
 import { RegisterUserDto } from './dtos/register-user.dto';
-import { UserRepository } from '../repositories/user.repository';
-import { User } from '../schemas/user.schema';
+import { UserRepository } from './repositories/user.repository';
+import { User } from './schemas/user.schema';
 import { v4 as uuidv4 } from 'uuid';
 import { HashHelperService } from './hash-helper.service';
 
